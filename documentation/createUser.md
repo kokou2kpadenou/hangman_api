@@ -1,6 +1,6 @@
 ## **Create User**
 
-Create a user and returns json data about a that user or returns json data about a user with that user already exist.
+Create a user and returns json data about created user or returns json data about existing user.
 
 - **URL**
 
