@@ -59,6 +59,35 @@ exports.postGame = (req, res, next) => {
 
 /**
  *
+ *  Get game by id controller
+ *
+ */
+
+exports.getGameById = (req, res, next) => {
+  if (!req.params.id) {
+    return res.status(400).json("Id parameter is missing.");
+  }
+
+  Games.findOne(
+    { _id: req.params.id },
+    "gameOwner gamePlayboard numberOfGuesses guesses"
+  )
+    .then((game) => {
+      console.log(game);
+
+      if (game) {
+        res.status(200).json(game);
+      } else {
+        res
+          .status(410)
+          .json({ errmsg: `Game with id: ${req.params.id} does not exist.` });
+      }
+    })
+    .catch((err) => res.status(500).json(err));
+};
+
+/**
+ *
  *  Get current game controller
  *
  */
