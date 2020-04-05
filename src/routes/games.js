@@ -8,10 +8,13 @@ const {
   postGuess,
   patchGameCancel,
   getGames,
+  getGameById,
 } = require("../controllers/games");
 
 // Create a new game
 router.post("/game", postGame);
+// Get game by id
+router.get("/game/by/:id", getGameById);
 // Get current game
 router.get("/game/current/:user", getCurrentGame);
 // Cancel game
