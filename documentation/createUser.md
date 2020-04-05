@@ -52,7 +52,7 @@ Create a user and returns json data about a that user or returns json data about
     headers: {
       "Content-Type": "application/json;charset=utf-8"
     },
-    body: JSON.stringify(user)
+    body: JSON.stringify(data)
   });
 
   let result = await response.json();
