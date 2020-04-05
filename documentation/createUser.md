@@ -16,7 +16,6 @@ Returns json data about a single user.
 
 - **Data Params**
 
-  **Required:**
   `{ "user" : "String" }`
 
 - **Success Response:**
@@ -32,12 +31,12 @@ Returns json data about a single user.
 - **Error Response:**
 
   - **Code:** 400 <br />
-    **Content:** `{ errmsg : "User doesn't exist" }`
+    **Content:** `{ errmsg : "User is required in body" }`
 
   OR
 
   - **Code:** 500 <br />
-    **Content:** `{ error : "You are unauthorized to make this request." }`
+    **Content:** `{ error : "Internal Server Error" }`
 
 - **Sample Call:**
 
@@ -57,6 +56,8 @@ Returns json data about a single user.
   let result = await response.json();
   console.log(result);
   ```
+
+- **Sample response:**
 
   ```javascript
   {
