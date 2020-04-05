@@ -4,7 +4,7 @@ Returns json data about a single user.
 
 - **URL**
 
-  /users/:id
+  hangman/user/:user
 
 - **Method:**
 
@@ -14,7 +14,7 @@ Returns json data about a single user.
 
   **Required:**
 
-  `id=[integer]`
+  `user=[string]`
 
 - **Data Params**
 
@@ -23,27 +23,33 @@ Returns json data about a single user.
 - **Success Response:**
 
   - **Code:** 200 <br />
-    **Content:** `{ id : 12, name : "Michael Bloom" }`
+    **Content:** `{ user : "username", score : 2 }`
 
 - **Error Response:**
 
-  - **Code:** 404 NOT FOUND <br />
-    **Content:** `{ error : "User doesn't exist" }`
+
+  - **Code:** 400 BAD REQUEST <br />
+    **Content:** `{ errmsg : "parameter user is required." }`
 
   OR
 
-  - **Code:** 401 UNAUTHORIZED <br />
-    **Content:** `{ error : "You are unauthorized to make this request." }`
+  - **Code:** 404 NOT FOUND <br />
+    **Content:** `{ errmsg : "User does not exist" }`
+
+  OR
+
+  - **Code:** 500 INTERNAL SERVER ERROR <br />
+    **Content:** `{ errmsg : "Internal server error." }`
 
 - **Sample Call:**
 
   ```javascript
-  $.ajax({
-    url: "/users/1",
-    dataType: "json",
-    type: "GET",
-    success: function(r) {
-      console.log(r);
+  let response = await fetch("http://127.0.0.1:3000/hangman/user/username", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json;charset=utf-8"
     }
   });
+
+  let result = await response.json();
   ```
