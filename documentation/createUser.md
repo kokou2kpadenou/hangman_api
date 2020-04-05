@@ -1,6 +1,6 @@
 ## **Create User**
 
-Returns json data about a single user.
+Create a user and returns json data about a that user or returns json data about a user with that user already exist.
 
 - **URL**
 
@@ -16,7 +16,9 @@ Returns json data about a single user.
 
 - **Data Params**
 
-  `{ "user" : "String" }`
+   **Required:**
+ 
+   `user=[string]`
 
 - **Success Response:**
 
