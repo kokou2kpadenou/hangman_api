@@ -18,7 +18,7 @@ router.get("/game/by/:id", getGameById);
 // Get current game
 router.get("/game/current/:user", getCurrentGame);
 // Cancel game
-router.patch("/game/cancel/:user.:gameID", patchGameCancel);
+router.patch("/game/cancel", patchGameCancel);
 // guess
 router.post("/game/guess", postGuess);
 // Get all games
