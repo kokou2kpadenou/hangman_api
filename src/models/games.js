@@ -8,9 +8,10 @@ const gamesSchema = new Schema({
   gameDate: { type: Date, default: Date.now },
   gameStatus: { type: String, default: "active" }, // 'active', 'game over', 'canceled'
   numberOfGuesses: Number,
+  winner: { type: String, default: "" },
   guesses: [
     {
-      _id: Schema.Types.ObjectId,
+      _id: { type: Schema.Types.ObjectId, auto: true },
       letterGuessed: String,
       guessingPlayer: String,
       guessingCorrect: Boolean,
