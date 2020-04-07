@@ -6,7 +6,6 @@ const mongoose = require("mongoose");
 
 const app = express();
 
-const infoRoutes = require("./routes/info");
 const usersRoutes = require("./routes/users");
 const gamesRoutes = require("./routes/games");
 
@@ -24,7 +23,6 @@ app.use((req, res, next) => {
 
 app.use(cors());
 
-app.use("/hangman", infoRoutes);
 app.use("/hangman", usersRoutes);
 app.use("/hangman", gamesRoutes);
 
@@ -42,11 +40,11 @@ mongoose
     useUnifiedTopology: true,
     useNewUrlParser: true,
     useFindAndModify: false,
-    useCreateIndex: true
+    useCreateIndex: true,
   })
   .then(() =>
     app.listen(PORT, () =>
       console.log(`Hangman's Server has started on ${PORT}`)
     )
   )
-  .catch(error => console.log(error));
+  .catch((error) => console.log(error));
