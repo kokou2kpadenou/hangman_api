@@ -12,27 +12,27 @@ exports.postUser = (req, res, next) => {
   }
 
   Users.findOne({ user: req.body.user })
-    .then(user => {
+    .then((user) => {
       if (!user || user.length === 0) {
         const user = new Users(req.body);
 
         user
           .save()
-          .then(newUser => {
+          .then((newUser) => {
             if (!newUser || newUser.length === 0) {
-              return res.status(500).json({ errmsg: "user isn't created." });
+              return res.status(500).json({ errmsg: "Internal Server Error" });
             }
 
             res.status(201).json(newUser);
           })
-          .catch(err => {
-            res.status(500).json(err);
+          .catch((err) => {
+            res.status(500).json({ errmsg: "Internal Server Error" });
           });
       } else {
         res.status(200).json(user);
       }
     })
-    .catch(err => res.status(500).json(err));
+    .catch((err) => res.status(500).json({ errmsg: "Internal Server Error" }));
 };
 
 /**
@@ -43,18 +43,18 @@ exports.postUser = (req, res, next) => {
 
 exports.getUserScore = (req, res, next) => {
   if (!req.params.user) {
-    return res.status(400).json({ errmsg: "user is required." });
+    return res.status(400).json({ errmsg: "parameter user is required." });
   }
 
   Users.findOne({ user: req.params.user })
-    .then(user => {
+    .then((user) => {
       if (user) {
         res.status(200).json({ score: user.score });
       } else {
-        res.status(400).json({ errmsg: "user does not exist." });
+        res.status(404).json({ errmsg: "user does not exist." });
       }
     })
-    .catch(err => es.status(500).json(err));
+    .catch((err) => es.status(500).json({ errmsg: "Internal Server Error" }));
 };
 
 /**
@@ -66,8 +66,8 @@ exports.getUserScore = (req, res, next) => {
 exports.getAllUsersScore = (req, res, next) => {
   Users.find({})
     .sort({ score: "desc" })
-    .then(users => {
+    .then((users) => {
       res.status(200).json(users);
     })
-    .catch(err => res.status(500).json(err));
+    .catch((err) => res.status(500).json({ errmsg: "Internal Server Error" }));
 };
