@@ -38,7 +38,7 @@ Create a user and returns json data about created user or returns json data abou
   OR
 
   - **Code:** 500 <br />
-    **Content:** `{ error : "Internal Server Error" }`
+    **Content:** `{ errmsg : "Internal Server Error" }`
 
 - **Sample Call:**
 
