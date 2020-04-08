@@ -1,6 +1,6 @@
 ## **Show all users with Scores**
 
-Returns json data about users with scores.
+Returns json data about all users with scores.
 
 - **URL**
 
