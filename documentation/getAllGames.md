@@ -44,3 +44,7 @@ Returns json data about all games.
 
   let result = await response.json();
   ```
+  
+* **Notes:**
+
+  When the user parameter is not supplied or different from gameOwner, gameWord is empty for all active games.
