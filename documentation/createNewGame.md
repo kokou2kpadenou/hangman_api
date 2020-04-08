@@ -19,7 +19,9 @@ Creates a new game and returns json data about created game.
    **Required:**
  
    `gameOwner=[string]`
+   
    `gameWord=[string]`   
+   
    `numberOfGuesses=[string]`
    
 - **Success Response:**
@@ -35,7 +37,7 @@ Creates a new game and returns json data about created game.
   OR
 
   - **Code:** 500 INTERNAL SERVER ERROR<br />
-    **Content:** `{ error : "Internal Server Error" }`
+    **Content:** `{ errmsg : "Internal Server Error" }`
 
 - **Sample Call:**
 
