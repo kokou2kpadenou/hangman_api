@@ -1,6 +1,6 @@
 ## **Cancel a Game**
 
-Change the status of the to canceled and returns json data about canceled game.
+Change the status of the game to canceled and returns json data about canceled game.
 
 - **URL**
 
