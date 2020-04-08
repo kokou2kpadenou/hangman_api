@@ -5,7 +5,7 @@ const router = express.Router();
 const {
   postGame,
   getCurrentGame,
-  postGuess,
+  patchGuess,
   patchGameCancel,
   getGames,
   getGameById,
@@ -16,12 +16,12 @@ router.post("/game", postGame);
 // Get game by id
 router.get("/game/by/:id", getGameById);
 // Get current game
-router.get("/game/current/:user", getCurrentGame);
+router.get("/game/current", getCurrentGame);
 // Cancel game
 router.patch("/game/cancel", patchGameCancel);
 // guess
-router.post("/game/guess", postGuess);
+router.patch("/game/guess", patchGuess);
 // Get all games
-router.get("/games/:user", getGames);
+router.get("/games/:user?", getGames);
 
 module.exports = router;
