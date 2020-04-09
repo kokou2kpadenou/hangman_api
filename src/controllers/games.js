@@ -11,15 +11,17 @@ exports.postGame = (req, res, next) => {
   //
 
   if (!req.body.gameOwner) {
-    return res.status(400).json({ errmsg: "Game Owner is missing." });
+    return res.status(400).json({ errmsg: "gameOwner is required in body." });
   }
 
   if (!req.body.gameWord) {
-    return res.status(400).json({ errmsg: "Game word is missing." });
+    return res.status(400).json({ errmsg: "gameWord is required in body." });
   }
 
   if (!req.body.numberOfGuesses) {
-    return res.status(400).json({ errmsg: "Number of guesses is missing." });
+    return res
+      .status(400)
+      .json({ errmsg: "numberOfGuesses is required in body." });
   }
 
   Users.findOne({ user: req.body.gameOwner })
@@ -42,19 +44,21 @@ exports.postGame = (req, res, next) => {
           .save()
           .then((newGame) => {
             if (!newGame || newGame.length === 0) {
-              return res.status(500).json({ errmsg: "Can create user." });
+              return res.status(500).json({ errmsg: "Internal server error." });
             }
 
             res.status(201).json(newGame);
           })
-          .catch((err) => res.status(500).json(err));
+          .catch((err) =>
+            res.status(500).json({ errmsg: "Internal server error" })
+          );
       } else {
         res
-          .status(422)
+          .status(404)
           .json(`Game Owner ${req.body.gameOwner} doesn't exist as user.`);
       }
     })
-    .catch((err) => res.status(500).json(err));
+    .catch((err) => res.status(500).json({ errmsg: "Internal server error." }));
 };
 
 /**
@@ -65,25 +69,30 @@ exports.postGame = (req, res, next) => {
 
 exports.getGameById = (req, res, next) => {
   if (!req.params.id) {
-    return res.status(400).json("Id parameter is missing.");
+    return res.status(400).json({ errmsg: "id parameter is missing." });
   }
 
   Games.findOne(
     { _id: req.params.id },
-    "gameOwner gamePlayboard numberOfGuesses guesses"
+    "gameOwner gameWord gamePlayboard gameStatus numberOfGuesses winner guesses"
   )
     .then((game) => {
-      console.log(game);
-
       if (game) {
-        res.status(200).json(game);
+        const returningGame = {
+          ...game.toObject(),
+          gameWord:
+            game.gameStatus === "game over" || game.gameStatus === "canceled"
+              ? game.gameWord
+              : "",
+        };
+        res.status(200).json(returningGame);
       } else {
         res
-          .status(410)
+          .status(404)
           .json({ errmsg: `Game with id: ${req.params.id} does not exist.` });
       }
     })
-    .catch((err) => res.status(500).json(err));
+    .catch((err) => res.status(500).json({ errmsg: "Internal server error" }));
 };
 
 /**
@@ -93,93 +102,188 @@ exports.getGameById = (req, res, next) => {
  */
 
 exports.getCurrentGame = (req, res, next) => {
-  if (!req.params.user) {
-    return res.status(400).json("User parameter is missing.");
-  }
-
   Games.findOne(
     { gameStatus: "active" },
-    "gameOwner gamePlayboard numberOfGuesses guesses"
+    "gameOwner gameWord gamePlayboard gameStatus numberOfGuesses winner guesses"
   )
     .sort({ gameDate: 1 })
     .limit(1)
     .then((game) => {
       if (game) {
-        res.status(200).json(game);
+        const returningGame = {
+          ...game.toObject(),
+          gameWord:
+            game.gameStatus === "game over" || game.gameStatus === "canceled"
+              ? game.gameWord
+              : "",
+        };
+        res.status(200).json(returningGame);
       } else {
-        res.status(410).json({ errmsg: "no current game" });
+        res.status(200).json({});
       }
     })
-    .catch((err) => res.status(500).json(err));
+    .catch((err) => res.status(500).json({ errmsg: "Internal server error" }));
 };
 
 /**
  *
+ *  Guessing controller
  *
  */
 
-exports.postGuess = (req, res, next) => {
+exports.patchGuess = (req, res, next) => {
   //
-  // obj = { gameId: "", guessLetter: "L", guessingPlayer: "dsds" };
-  if (!req.body.gameId) {
-    res.status(400).json("game id is missing");
+  // body = { gameID: "", guessLetter: "L", guessingPlayer: "dsds" };
+  if (!req.body.gameID) {
+    res.status(400).json("gameID is required in body");
   }
 
   if (!req.body.guessLetter) {
-    res.status(400).json("Guessing letter is missing");
+    res.status(400).json("guessingLetter is required in body");
   }
 
   if (!req.body.guessingPlayer) {
-    res.status(400).json("guessing player is missing");
+    res.status(400).json("guessingPlayer is required in body");
   }
 
-  Games.findOne({ _id: req.body.gameId }, (err, game) => {
-    if (err) {
-      res.status(500).json(err);
-    }
+  const playingGame = () => {
+    Games.findOne({ _id: req.body.gameID })
+      .then((game) => {
+        if (game) {
+          if (game.gameStatus === "canceled") {
+            return res
+              .status(410)
+              .json(`game with ${req.body.gameID}, has been canceled`);
+          }
 
-    if (!game) {
-      res.status(400).json(`game with ${req.body.gameId}, does not exist`);
-    }
+          if (game.gameStatus === "game over") {
+            return res
+              .status(410)
+              .json(`game with ${req.body.gameID}, is over`);
+          }
 
-    if (game.gameStatus === "canceled") {
-      res.status(400).json(`game with ${req.body.gameId}, has been canceled`);
-    }
+          if (game.gameOwner === req.body.guessingPlayer) {
+            return res.status(410).json(`user can't play is owner game`);
+          }
 
-    if (game.gameStatus === "game over") {
-      // send current games
-      res.status(400).json(`user can't play is owner game`);
-    }
+          // Check if the letter is already played
 
-    if (game.gameOwner === req.body.guessingPlayer) {
-      res.status(400).json(`game with ${req.body.gameId}, is over`);
-    }
+          if (
+            game.guesses
+              .map((g) => g.letterGuessed)
+              .includes(req.body.guessLetter)
+          ) {
+            return res
+              .status(410)
+              .json(`${req.body.guessLetter} was proposed by another user.`);
+          }
 
-    if (
-      game.guesses.map((g) => g.letterGuessed).includes([req.boby.guessLetter])
-    ) {
-      res.status(400).json(`${req.boby.guessLetter} has been proposed.`);
-    }
+          // Playing
+          const newGamePlayboard = [...game.gamePlayboard];
+          game.gameWord
+            .replace(/\s+/g, "")
+            .split("")
+            .forEach((l, i) => {
+              if (l === req.body.guessLetter) {
+                newGamePlayboard[i] = l;
+              }
+            });
+          let winner = "",
+            gameStatus = game.gameStatus;
+          // the new game playbord is all filled and guessed letter is on the board
+          if (
+            !newGamePlayboard.includes("") &&
+            newGamePlayboard.includes(req.body.guessLetter)
+          ) {
+            gameStatus = "game over";
+            winner = req.body.guessingPlayer;
+          }
 
-    if (!game.gameWord.includes(req.boby.guessLetter)) {
-      // Check if there is a unresolved games
-      //
-    }
+          // the new game playboard has not filled spot and number of guesses is reached
 
-    const newGamePlayboard = [...game.gamePlayboard];
-    game.gameWord.forEach((l, i) => {
-      if (l === req.body.guessLetter) {
-        newGamePlayboard[i] = l;
+          if (
+            newGamePlayboard.includes("") &&
+            !newGamePlayboard.includes(req.body.guessLetter) &&
+            game.guesses.filter((g) => g.guessingCorrect === false).length +
+              1 >=
+              game.numberOfGuesses
+          ) {
+            gameStatus = "game over";
+            winner = game.gameOwner;
+          }
+
+          const guessData = {
+            letterGuessed: req.body.guessLetter,
+            guessingPlayer: req.body.guessingPlayer,
+            guessingCorrect: newGamePlayboard.includes(req.body.guessLetter),
+          };
+
+          Games.findOneAndUpdate(
+            { _id: req.body.gameID },
+            {
+              $set: {
+                gamePlayboard: newGamePlayboard,
+                gameStatus: gameStatus,
+                winner: winner,
+              },
+              $push: { guesses: guessData },
+            },
+            {
+              new: true,
+              fields:
+                "gameOwner gameWord gamePlayboard gameStatus numberOfGuesses winner guesses",
+            }
+          )
+            .then((gameUpdated) => {
+              if (gameUpdated) {
+                //
+                // Update user score
+                if (gameStatus === "game over") {
+                  Users.findOneAndUpdate(
+                    { user: winner },
+                    { $inc: { score: 1 } }
+                  ).catch((err) =>
+                    res.status(500).json({ errmsg: "Internal server error" })
+                  );
+                }
+
+                //
+                const returningGame = {
+                  ...gameUpdated.toObject(),
+                  gameWord:
+                    gameUpdated.gameStatus === "game over" ||
+                    gameUpdated.gameStatus === "canceled"
+                      ? gameUpdated.gameWord
+                      : "",
+                };
+                res.status(200).json(returningGame);
+              } else {
+                res.status(500).json({ errmsg: "Internal server error" });
+              }
+            })
+            .catch((err) =>
+              res.status(500).json({ errmsg: "Internal server error" })
+            );
+
+          //
+        } else {
+          res.status(404).json(`game with ${req.body.gameID}, does not exist`);
+        }
+      })
+      .catch((err) => {
+        res.status(500).json({ errmsg: "Internal server error" });
+      });
+  };
+
+  Users.findOne({ user: req.body.guessingPlayer })
+    .then((user) => {
+      if (user) {
+        playingGame();
+      } else {
+        res.status(404).json({ errmsg: "user does not exist" });
       }
-    });
-
-    if (newGamePlayboard.includes([""])) {
-      // The game is not over
-    }
-
-    // the game is over
-    //
-  });
+    })
+    .catch((err) => res.status(500).json({ errmsg: "Internal server error" }));
 };
 
 /**
@@ -189,17 +293,17 @@ exports.postGuess = (req, res, next) => {
  */
 
 exports.patchGameCancel = (req, res, next) => {
-  if (!req.params.gameID) {
-    res.status(400).json({ errmsg: "Game Id parameter is missing" });
+  if (!req.body.gameID) {
+    res.status(400).json({ errmsg: "gameID is required in body" });
   }
-  if (!req.params.user) {
-    res.status(400).json({ errmsg: "User parameter is missing" });
+  if (!req.body.user) {
+    res.status(400).json({ errmsg: "user is required in body" });
   }
 
   Games.findOneAndUpdate(
     {
-      _id: req.params.gameID,
-      gameOwner: req.params.user,
+      _id: req.body.gameID,
+      gameOwner: req.body.user,
       gameStatus: "active",
     },
     { gameStatus: "canceled" },
@@ -209,37 +313,44 @@ exports.patchGameCancel = (req, res, next) => {
       if (game) {
         res.status(200).json(game);
       } else {
-        Games.findOne({ _id: req.params.gameID })
+        Games.findOne({ _id: req.body.gameID })
           .then((_game) => {
-            if (_game.gameOwner !== req.params.user) {
-              res.status(400).json({
-                errmsg: `game id: ${req.params.gameID} is not belong to ${req.params.user}.`,
-              });
-              return;
-            }
             if (_game) {
-              if (_game.gameStatus === "canceled") {
-                res.status(400).json({
-                  errmsg: `game id: ${req.params.gameID} is already canceled.`,
+              // user not owner
+              if (_game.gameOwner !== req.body.user) {
+                res.status(422).json({
+                  errmsg: `gameID: ${req.body.gameID} is not for ${req.body.user}.`,
                 });
                 return;
               }
+
+              // already canceled
+              if (_game.gameStatus === "canceled") {
+                res.status(410).json({
+                  errmsg: `gameID: ${req.body.gameID} is already canceled.`,
+                });
+                return;
+              }
+
+              // the game is over
               if (_game.gameStatus === "game over") {
-                res.status(400).json({
-                  errmsg: `game id: ${req.params.gameID} is over.`,
+                res.status(410).json({
+                  errmsg: `gameID: ${req.body.gameID} is over.`,
                 });
                 return;
               }
             } else {
-              res.status(400).json({
-                errmsg: `game id: ${req.params.gameID} do not exist.`,
+              res.status(404).json({
+                errmsg: `gameID: ${req.body.gameID} do not exist.`,
               });
             }
           })
-          .catch((err) => res.status(500).json(err));
+          .catch((err) =>
+            res.status(500).json({ errmsg: "Internal server error" })
+          );
       }
     })
-    .catch((err) => res.status(500).json(err));
+    .catch((err) => res.status(500).json({ errmsg: "Internal server error" }));
 };
 
 /**
@@ -249,10 +360,6 @@ exports.patchGameCancel = (req, res, next) => {
  */
 
 exports.getGames = (req, res, next) => {
-  if (!req.params.user) {
-    res.status(400).json("User paramater is missing.");
-  }
-
   Games.find({})
     .then((games) => {
       if (games) {
@@ -266,8 +373,8 @@ exports.getGames = (req, res, next) => {
 
         res.status(200).json(gamesToUser);
       } else {
-        res.status(200).json(games);
+        res.status(200).json({});
       }
     })
-    .catch((err) => res.status(500).json(err));
+    .catch((err) => res.status(500).json({ errmsg: "Internal server error" }));
 };
