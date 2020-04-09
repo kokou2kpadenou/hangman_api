@@ -53,9 +53,9 @@ exports.postGame = (req, res, next) => {
             res.status(500).json({ errmsg: "Internal server error" })
           );
       } else {
-        res
-          .status(404)
-          .json(`Game Owner ${req.body.gameOwner} doesn't exist as user.`);
+        res.status(404).json({
+          errmsg: `Game Owner ${req.body.gameOwner} doesn't exist as user.`,
+        });
       }
     })
     .catch((err) => res.status(500).json({ errmsg: "Internal server error." }));
@@ -135,15 +135,15 @@ exports.patchGuess = (req, res, next) => {
   //
   // body = { gameID: "", guessLetter: "L", guessingPlayer: "dsds" };
   if (!req.body.gameID) {
-    res.status(400).json("gameID is required in body");
+    res.status(400).json({ errmsg: "gameID is required in body" });
   }
 
   if (!req.body.guessLetter) {
-    res.status(400).json("guessingLetter is required in body");
+    res.status(400).json({ errmsg: "guessingLetter is required in body" });
   }
 
   if (!req.body.guessingPlayer) {
-    res.status(400).json("guessingPlayer is required in body");
+    res.status(400).json({ errmsg: "guessingPlayer is required in body" });
   }
 
   const playingGame = () => {
@@ -151,19 +151,21 @@ exports.patchGuess = (req, res, next) => {
       .then((game) => {
         if (game) {
           if (game.gameStatus === "canceled") {
-            return res
-              .status(410)
-              .json(`game with ${req.body.gameID}, has been canceled`);
+            return res.status(410).json({
+              errmsg: `game with ${req.body.gameID}, has been canceled`,
+            });
           }
 
           if (game.gameStatus === "game over") {
             return res
               .status(410)
-              .json(`game with ${req.body.gameID}, is over`);
+              .json({ errmsg: `game with ${req.body.gameID}, is over` });
           }
 
           if (game.gameOwner === req.body.guessingPlayer) {
-            return res.status(410).json(`user can't play is owner game`);
+            return res
+              .status(410)
+              .json({ errmsg: `user can't play is owner game` });
           }
 
           // Check if the letter is already played
@@ -173,9 +175,9 @@ exports.patchGuess = (req, res, next) => {
               .map((g) => g.letterGuessed)
               .includes(req.body.guessLetter)
           ) {
-            return res
-              .status(410)
-              .json(`${req.body.guessLetter} was proposed by another user.`);
+            return res.status(410).json({
+              errmsg: `${req.body.guessLetter} was proposed by another user.`,
+            });
           }
 
           // Playing
@@ -267,7 +269,9 @@ exports.patchGuess = (req, res, next) => {
 
           //
         } else {
-          res.status(404).json(`game with ${req.body.gameID}, does not exist`);
+          res
+            .status(404)
+            .json({ errmsg: `game with ${req.body.gameID}, does not exist` });
         }
       })
       .catch((err) => {
